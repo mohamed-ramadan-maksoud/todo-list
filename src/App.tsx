@@ -2,11 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { Container, Box, Typography, Paper } from '@mui/material';
-import { Todo, Category, CategoryConfig, PrayerTime, LearningType } from './types';
+import { Todo, Category, CategoryConfig, PrayerTime, LearningType, DailyProgress } from './types';
 import TodoList from './components/TodoList';
 import AddTodo from './components/AddTodo';
 import CategoryTabs from './components/CategoryTabs';
 import SubCategoryTabs from './components/SubCategoryTabs';
+import ProgressTracker from './components/ProgressTracker';
 import './App.css';
 
 const theme = createTheme({
@@ -109,9 +110,32 @@ function App() {
 
   const [selectedCategory, setSelectedCategory] = useState<Category>('Home');
   const [selectedSubCategory, setSelectedSubCategory] = useState<string>('');
+  const [dailyProgress, setDailyProgress] = useState<DailyProgress>({
+    date: new Date().toDateString(),
+    points: 0,
+    completedTasks: 0,
+    totalTasks: 0,
+  });
 
   useEffect(() => {
     localStorage.setItem('todos', JSON.stringify(todos));
+    
+    // Calculate daily progress
+    const today = new Date().toDateString();
+    const todayTodos = todos.filter(todo => 
+      new Date(todo.createdAt).toDateString() === today
+    );
+    
+    const completedTasks = todayTodos.filter(todo => todo.completed).length;
+    const totalTasks = todayTodos.length;
+    const points = completedTasks * 10; // 10 points per completed task
+
+    setDailyProgress({
+      date: today,
+      points,
+      completedTasks,
+      totalTasks,
+    });
   }, [todos]);
 
   const addTodo = (text: string) => {
@@ -124,6 +148,7 @@ function App() {
       category: selectedCategory,
       createdAt: new Date(),
       type: selectedCategory === 'Learning' ? (selectedSubCategory as LearningType) : undefined,
+      points: 10, // Each task is worth 10 points
     };
 
     if (selectedCategory === 'Learning' && selectedSubCategory === 'Monthly') {
@@ -219,6 +244,7 @@ function App() {
           <Typography variant="h3" component="h1" gutterBottom align="center">
             📝 My Todo List
           </Typography>
+          <ProgressTracker dailyProgress={dailyProgress} />
           <CategoryTabs
             selectedCategory={selectedCategory}
             onCategoryChange={(category) => {

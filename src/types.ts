@@ -17,6 +17,13 @@ export interface CategoryConfig {
   subCategories: Record<string, SubCategoryConfig>;
 }
 
+export interface DailyProgress {
+  date: string;
+  points: number;
+  completedTasks: number;
+  totalTasks: number;
+}
+
 export interface LearningTask {
   id: string;
   text: string;
@@ -28,6 +35,7 @@ export interface LearningTask {
   progress?: number;
   dailyTasks?: string[];
   completedDailyTasks?: string[];
+  points?: number;
 }
 
 export interface Todo {
@@ -42,4 +50,5 @@ export interface Todo {
   progress?: number;
   dailyTasks?: string[];
   completedDailyTasks?: string[];
+  points?: number;
 } 
