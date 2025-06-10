@@ -4,40 +4,89 @@ import {
   Button,
   Box,
   Typography,
+  ToggleButtonGroup,
+  ToggleButton,
 } from '@mui/material';
-import { Category } from '../types';
+import { Category, CategoryConfig } from '../types';
 
 interface AddTodoProps {
-  onAdd: (text: string, category: Category) => void;
+  onAdd: (text: string, category: Category, subCategory?: string) => void;
   selectedCategory: Category;
+  selectedSubCategory: string;
+  onSubCategoryChange: (subCategory: string) => void;
 }
 
-const AddTodo: React.FC<AddTodoProps> = ({ onAdd, selectedCategory }) => {
+const AddTodo: React.FC<AddTodoProps> = ({
+  onAdd,
+  selectedCategory,
+  selectedSubCategory,
+  onSubCategoryChange,
+}) => {
   const [text, setText] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (text.trim()) {
-      onAdd(text.trim(), selectedCategory);
+      onAdd(text.trim(), selectedCategory, selectedSubCategory);
       setText('');
     }
   };
 
   const getPlaceholder = () => {
-    switch (selectedCategory) {
-      case 'Home':
-        return 'e.g., Clean the dragon\'s lair (my room) 🐉';
-      case 'Learning':
-        return 'e.g., Master the art of coding like a wizard 🧙‍♂️';
-      case 'Prayers':
-        return 'e.g., Take a moment to breathe and be grateful 🌟';
-      default:
-        return 'Add a new task...';
+    const config = categoryConfigs[selectedCategory];
+    if (selectedCategory === 'Learning') {
+      if (selectedSubCategory === 'monthly') {
+        return 'e.g., Complete React course by end of month 📚';
+      }
+      return 'e.g., Practice coding for 2 hours today 💻';
     }
+    if (selectedCategory === 'Prayers' && selectedSubCategory) {
+      return `e.g., ${selectedSubCategory} prayer reminder - ${config.subCategories?.[selectedSubCategory]?.description}`;
+    }
+    return 'e.g., Clean the dragon\'s lair (my room) 🐉';
+  };
+
+  const renderSubCategorySelector = () => {
+    const config = categoryConfigs[selectedCategory];
+    if (!config.subCategories) return null;
+
+    return (
+      <Box sx={{ mb: 2 }}>
+        <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+          Select Type:
+        </Typography>
+        <ToggleButtonGroup
+          value={selectedSubCategory}
+          exclusive
+          onChange={(_, value) => onSubCategoryChange(value)}
+          size="small"
+          sx={{ mb: 1 }}
+        >
+          {Object.entries(config.subCategories).map(([key, subConfig]) => (
+            <ToggleButton
+              key={key}
+              value={key}
+              sx={{
+                '&.Mui-selected': {
+                  bgcolor: 'primary.main',
+                  color: 'white',
+                  '&:hover': {
+                    bgcolor: 'primary.dark',
+                  },
+                },
+              }}
+            >
+              {subConfig.icon} {key}
+            </ToggleButton>
+          ))}
+        </ToggleButtonGroup>
+      </Box>
+    );
   };
 
   return (
     <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
+      {renderSubCategorySelector()}
       <Typography variant="subtitle2" color="text.secondary" gutterBottom>
         {getPlaceholder()}
       </Typography>

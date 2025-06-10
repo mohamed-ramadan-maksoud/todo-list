@@ -8,6 +8,7 @@ import {
   Checkbox,
   Typography,
   Box,
+  Chip,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { Todo, CategoryConfig } from '../types';
@@ -35,6 +36,14 @@ const TodoList: React.FC<TodoListProps> = ({
     );
   }
 
+  const formatDate = (date: Date) => {
+    return new Date(date).toLocaleDateString(undefined, {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  };
+
   return (
     <List>
       {todos.map((todo) => (
@@ -57,16 +66,38 @@ const TodoList: React.FC<TodoListProps> = ({
           />
           <ListItemText
             primary={
-              <Typography
-                sx={{
-                  textDecoration: todo.completed ? 'line-through' : 'none',
-                  color: todo.completed ? 'text.secondary' : 'text.primary',
-                }}
-              >
-                {todo.text}
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Typography
+                  sx={{
+                    textDecoration: todo.completed ? 'line-through' : 'none',
+                    color: todo.completed ? 'text.secondary' : 'text.primary',
+                  }}
+                >
+                  {todo.text}
+                </Typography>
+                {todo.prayerTime && (
+                  <Chip
+                    size="small"
+                    label={todo.prayerTime}
+                    icon={<span>{categoryConfig.subCategories?.[todo.prayerTime]?.icon}</span>}
+                    sx={{ bgcolor: 'primary.light', color: 'white' }}
+                  />
+                )}
+                {todo.dueDate && (
+                  <Chip
+                    size="small"
+                    label={`Due: ${formatDate(todo.dueDate)}`}
+                    icon={<span>📅</span>}
+                    sx={{ bgcolor: 'secondary.light', color: 'white' }}
+                  />
+                )}
+              </Box>
+            }
+            secondary={
+              <Typography variant="body2" color="text.secondary">
+                Created: {formatDate(todo.createdAt)}
               </Typography>
             }
-            secondary={new Date(todo.createdAt).toLocaleDateString()}
           />
           <ListItemSecondaryAction>
             <IconButton

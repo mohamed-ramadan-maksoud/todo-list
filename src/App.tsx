@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { Container, Box, Typography, Paper } from '@mui/material';
-import { Todo, Category, CategoryConfig } from './types';
+import { Todo, Category, CategoryConfig, PrayerTime } from './types';
 import TodoList from './components/TodoList';
 import AddTodo from './components/AddTodo';
 import CategoryTabs from './components/CategoryTabs';
@@ -29,12 +29,44 @@ const categoryConfigs: Record<Category, CategoryConfig> = {
   Learning: {
     icon: '📚',
     color: '#2196f3',
-    description: 'Track progress for studying, coding, or personal growth',
+    description: 'Track your monthly learning goals and daily tasks',
+    subCategories: {
+      monthly: {
+        icon: '📅',
+        description: 'Monthly learning goals and milestones',
+      },
+      daily: {
+        icon: '📝',
+        description: 'Daily learning tasks and practice',
+      },
+    },
   },
   Prayers: {
     icon: '🙏',
     color: '#9c27b0',
-    description: 'Manage prayer times or mindfulness activities',
+    description: 'Daily prayer times and spiritual activities',
+    subCategories: {
+      Fajr: {
+        icon: '🌅',
+        description: 'Dawn prayer',
+      },
+      Dhuhr: {
+        icon: '☀️',
+        description: 'Midday prayer',
+      },
+      Asr: {
+        icon: '🌤️',
+        description: 'Afternoon prayer',
+      },
+      Maghrib: {
+        icon: '🌅',
+        description: 'Sunset prayer',
+      },
+      Isha: {
+        icon: '🌙',
+        description: 'Night prayer',
+      },
+    },
   },
 };
 
@@ -44,12 +76,13 @@ function App() {
     return savedTodos ? JSON.parse(savedTodos) : [];
   });
   const [selectedCategory, setSelectedCategory] = useState<Category>('Home');
+  const [selectedSubCategory, setSelectedSubCategory] = useState<string>('');
 
   useEffect(() => {
     localStorage.setItem('todos', JSON.stringify(todos));
   }, [todos]);
 
-  const addTodo = (text: string, category: Category) => {
+  const addTodo = (text: string, category: Category, subCategory?: string) => {
     const newTodo: Todo = {
       id: Date.now().toString(),
       text,
@@ -57,6 +90,16 @@ function App() {
       category,
       createdAt: new Date(),
     };
+
+    if (category === 'Learning' && subCategory === 'monthly') {
+      // Set due date to end of current month
+      const now = new Date();
+      const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      newTodo.dueDate = lastDay;
+    } else if (category === 'Prayers' && subCategory) {
+      newTodo.prayerTime = subCategory as PrayerTime;
+    }
+
     setTodos([...todos, newTodo]);
   };
 
@@ -72,7 +115,16 @@ function App() {
     setTodos(todos.filter((todo) => todo.id !== id));
   };
 
-  const filteredTodos = todos.filter((todo) => todo.category === selectedCategory);
+  const filteredTodos = todos.filter((todo) => {
+    if (todo.category !== selectedCategory) return false;
+    if (selectedCategory === 'Learning' && selectedSubCategory) {
+      return selectedSubCategory === 'monthly' ? !!todo.dueDate : !todo.dueDate;
+    }
+    if (selectedCategory === 'Prayers' && selectedSubCategory) {
+      return todo.prayerTime === selectedSubCategory;
+    }
+    return true;
+  });
 
   return (
     <ThemeProvider theme={theme}>
@@ -85,10 +137,18 @@ function App() {
           <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
             <CategoryTabs
               selectedCategory={selectedCategory}
-              onCategoryChange={setSelectedCategory}
+              onCategoryChange={(category) => {
+                setSelectedCategory(category);
+                setSelectedSubCategory('');
+              }}
               categoryConfigs={categoryConfigs}
             />
-            <AddTodo onAdd={addTodo} selectedCategory={selectedCategory} />
+            <AddTodo
+              onAdd={addTodo}
+              selectedCategory={selectedCategory}
+              selectedSubCategory={selectedSubCategory}
+              onSubCategoryChange={setSelectedSubCategory}
+            />
           </Paper>
           <TodoList
             todos={filteredTodos}
